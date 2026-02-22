@@ -1,0 +1,196 @@
+version: '3.8'
+
+services:
+  # PostgreSQL databases
+  postgres-users:
+    image: postgres:15-alpine
+    container_name: eagle-postgres-users
+    environment:
+      POSTGRES_DB: eagle_users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-users-data:/var/lib/postgresql/data
+      - ./user-service/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eagle-network
+
+  postgres-accounts:
+    image: postgres:15-alpine
+    container_name: eagle-postgres-accounts
+    environment:
+      POSTGRES_DB: eagle_accounts
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-accounts-data:/var/lib/postgresql/data
+      - ./account-service/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eagle-network
+
+  postgres-transactions:
+    image: postgres:15-alpine
+    container_name: eagle-postgres-transactions
+    environment:
+      POSTGRES_DB: eagle_transactions
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-transactions-data:/var/lib/postgresql/data
+      - ./transaction-service/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eagle-network
+
+  # Redis for event streaming
+  redis:
+    image: redis:7-alpine
+    container_name: eagle-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - eagle-network
+
+  # Microservices
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: eagle-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      PORT: "8081"
+      DATABASE_URL: "postgres://postgres:postgres@postgres-users:5432/eagle_users?sslmode=disable"
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+    networks:
+      - eagle-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: eagle-user-service
+    ports:
+      - "8082:8082"
+    environment:
+      PORT: "8082"
+      DATABASE_URL: "postgres://postgres:postgres@postgres-users:5432/eagle_users?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - eagle-network
+    restart: unless-stopped
+
+  account-service:
+    build:
+      context: .
+      dockerfile: account-service/Dockerfile
+    container_name: eagle-account-service
+    ports:
+      - "8083:8083"
+    environment:
+      PORT: "8083"
+      DATABASE_URL: "postgres://postgres:postgres@postgres-accounts:5432/eagle_accounts?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres-accounts:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - eagle-network
+    restart: unless-stopped
+
+  transaction-service:
+    build:
+      context: .
+      dockerfile: transaction-service/Dockerfile
+    container_name: eagle-transaction-service
+    ports:
+      - "8084:8084"
+    environment:
+      PORT: "8084"
+      DATABASE_URL: "postgres://postgres:postgres@postgres-transactions:5432/eagle_transactions?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres-transactions:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - eagle-network
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: eagle-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      AUTH_SERVICE_URL: "http://auth-service:8081"
+      JWT_SECRET: ${JWT_SECRET}
+      USER_SERVICE_URL: "http://user-service:8082"
+      ACCOUNT_SERVICE_URL: "http://account-service:8083"
+      TRANSACTION_SERVICE_URL: "http://transaction-service:8084"
+    depends_on:
+      - auth-service
+      - user-service
+      - account-service
+      - transaction-service
+    networks:
+      - eagle-network
+    restart: unless-stopped
+
+volumes:
+  postgres-users-data:
+  postgres-accounts-data:
+  postgres-transactions-data:
+  redis-data:
+
+
+networks:
+  eagle-network:
+    driver: bridge

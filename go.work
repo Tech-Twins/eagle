@@ -1,0 +1,10 @@
+go 1.21
+
+use (
+	./account-service
+	./api-gateway
+	./auth-service
+	./shared
+	./transaction-service
+	./user-service
+)
