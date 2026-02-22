@@ -54,21 +54,19 @@ func main() {
 	// Setup router
 	router := gin.Default()
 	router.Use(middleware.LoggingMiddleware())
-	router.Use(middleware.AuthMiddleware())
-
-	// Transaction routes
-	v1 := router.Group("/v1/accounts/:accountNumber/transactions")
-	{
-		v1.POST("", transactionHandler.CreateTransaction)
-		v1.GET("", transactionHandler.ListTransactions)
-		v1.GET("/:transactionId", transactionHandler.GetTransaction)
-	}
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
+	// Transaction routes
+	v1 := router.Group("/v1/accounts/:accountNumber/transactions", middleware.AuthMiddleware())
+	{
+		v1.POST("", transactionHandler.CreateTransaction)
+		v1.GET("", transactionHandler.ListTransactions)
+		v1.GET("/:transactionId", transactionHandler.GetTransaction)
+	}
 	port := getEnv("PORT", "8084")
 	log.Printf("Transaction service starting on port %s", port)
 	if err := router.Run(":" + port); err != nil {

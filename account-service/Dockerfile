@@ -3,10 +3,12 @@ FROM golang:1.21-alpine AS builder
 WORKDIR /app
 
 # Copy shared module
-COPY shared/ /app/shared/
+COPY shared/ ./shared/
 
-# Copy account service
-COPY account-service/go.mod account-service/go.sum* ./
+# Copy account service into its own subdirectory so that ../shared resolves correctly
+COPY account-service/go.mod account-service/go.sum* ./account-service/
+
+WORKDIR /app/account-service
 RUN go mod download
 
 COPY account-service/ ./
@@ -19,7 +21,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /app/account-service .
+COPY --from=builder /app/account-service/account-service .
 
 EXPOSE 8083
 

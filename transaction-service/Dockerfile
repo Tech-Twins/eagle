@@ -3,10 +3,12 @@ FROM golang:1.21-alpine AS builder
 WORKDIR /app
 
 # Copy shared module
-COPY shared/ /app/shared/
+COPY shared/ ./shared/
 
-# Copy transaction service
-COPY transaction-service/go.mod transaction-service/go.sum* ./
+# Copy transaction service into its own subdirectory so that ../shared resolves correctly
+COPY transaction-service/go.mod transaction-service/go.sum* ./transaction-service/
+
+WORKDIR /app/transaction-service
 RUN go mod download
 
 COPY transaction-service/ ./
@@ -19,7 +21,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /app/transaction-service .
+COPY --from=builder /app/transaction-service/transaction-service .
 
 EXPOSE 8084
 

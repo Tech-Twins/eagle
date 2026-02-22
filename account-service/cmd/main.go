@@ -54,9 +54,12 @@ func main() {
 	// Setup router
 	router := gin.Default()
 	router.Use(middleware.LoggingMiddleware())
-	router.Use(middleware.AuthMiddleware())
 
-	v1 := router.Group("/v1/accounts")
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	v1 := router.Group("/v1/accounts", middleware.AuthMiddleware())
 	{
 		v1.POST("", accountHandler.CreateAccount)
 		v1.GET("", accountHandler.ListAccounts)
@@ -65,11 +68,6 @@ func main() {
 		v1.DELETE("/:accountNumber", accountHandler.DeleteAccount)
 	}
 
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
-
-	// Start event subscriber — handled by the command service
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

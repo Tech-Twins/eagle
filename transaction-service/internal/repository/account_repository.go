@@ -33,8 +33,8 @@ func NewAccountRepository(db interface{}, redis *redis.Client) *AccountRepositor
 // In a real system, this would make an HTTP call to the account service
 // For simplicity, we'll cache account data in Redis during transaction creation
 func (r *AccountRepository) GetAccount(ctx context.Context, accountNumber string) (*Account, error) {
-	// Try to get from cache first
-	cacheKey := fmt.Sprintf("account:%s", accountNumber)
+	// Try to get from cache first — key must match the account-service read model prefix.
+	cacheKey := fmt.Sprintf("account:view:%s", accountNumber)
 	data, err := r.redis.Get(ctx, cacheKey).Result()
 
 	if err == redis.Nil {
@@ -55,7 +55,7 @@ func (r *AccountRepository) GetAccount(ctx context.Context, accountNumber string
 
 // CacheAccount stores account information in Redis cache
 func (r *AccountRepository) CacheAccount(ctx context.Context, account *Account) error {
-	cacheKey := fmt.Sprintf("account:%s", account.AccountNumber)
+	cacheKey := fmt.Sprintf("account:view:%s", account.AccountNumber)
 	data, err := json.Marshal(account)
 	if err != nil {
 		return fmt.Errorf("failed to marshal account: %w", err)
