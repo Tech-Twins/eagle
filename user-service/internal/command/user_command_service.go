@@ -91,11 +91,7 @@ func (s *UserCommandService) UpdateUser(cmd cqrs.UpdateUserCommand) (*models.Use
 
 // DeleteUser rejects the operation if the user still has open accounts.
 func (s *UserCommandService) DeleteUser(cmd cqrs.DeleteUserCommand) error {
-	hasAccounts, err := s.writeRepo.HasAccounts(cmd.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to check user accounts: %w", err)
-	}
-	if hasAccounts {
+	if s.readRepo.HasActiveAccounts(context.Background(), cmd.UserID) {
 		return fmt.Errorf("user has active accounts")
 	}
 	if err := s.writeRepo.Delete(cmd.UserID); err != nil {
@@ -123,6 +119,7 @@ func (s *UserCommandService) HandleAccountEvent(ctx context.Context, event event
 			return fmt.Errorf("failed to unmarshal account.created event: %w", err)
 		}
 		log.Printf("User %s created account %s", data.UserID, data.AccountNumber)
+		s.readRepo.IncrAccountCount(ctx, data.UserID)
 	case events.AccountDeleted:
 		dataBytes, _ := json.Marshal(event.Data)
 		var data events.AccountDeletedEvent
@@ -130,6 +127,7 @@ func (s *UserCommandService) HandleAccountEvent(ctx context.Context, event event
 			return fmt.Errorf("failed to unmarshal account.deleted event: %w", err)
 		}
 		log.Printf("User %s deleted account %s", data.UserID, data.AccountNumber)
+		s.readRepo.DecrAccountCount(ctx, data.UserID)
 	}
 	return nil
 }

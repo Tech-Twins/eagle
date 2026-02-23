@@ -11,17 +11,20 @@ import (
 )
 
 const userViewKeyPrefix = "user:view:"
+const userAccCountKeyPrefix = "user:acc-count:"
 
 // UserReadRepository handles all read operations for users.
 // It uses Redis as the primary read store, falling back to PostgreSQL on a miss.
 type UserReadRepository struct {
 	db    *sql.DB
+	redis *goredis.Client
 	cache *sharedredis.ViewCache[models.UserView]
 }
 
 func NewUserReadRepository(db *sql.DB, redisClient *goredis.Client) *UserReadRepository {
 	return &UserReadRepository{
 		db:    db,
+		redis: redisClient,
 		cache: sharedredis.NewViewCache[models.UserView](redisClient, 0),
 	}
 }
@@ -78,4 +81,24 @@ func (r *UserReadRepository) CacheUserView(ctx context.Context, view *models.Use
 // InvalidateUserView removes the Redis read model entry for a deleted user.
 func (r *UserReadRepository) InvalidateUserView(ctx context.Context, userID string) {
 	r.cache.Delete(ctx, userViewKeyPrefix+userID)
+}
+
+// HasActiveAccounts returns true if the user has one or more open accounts,
+// as tracked by account.created / account.deleted events in Redis.
+func (r *UserReadRepository) HasActiveAccounts(ctx context.Context, userID string) bool {
+	val, err := r.redis.Get(ctx, userAccCountKeyPrefix+userID).Int64()
+	return err == nil && val > 0
+}
+
+// IncrAccountCount increments the active-account counter for a user.
+func (r *UserReadRepository) IncrAccountCount(ctx context.Context, userID string) {
+	r.redis.Incr(ctx, userAccCountKeyPrefix+userID)
+}
+
+// DecrAccountCount decrements the active-account counter for a user (floor 0).
+func (r *UserReadRepository) DecrAccountCount(ctx context.Context, userID string) {
+	current, err := r.redis.Get(ctx, userAccCountKeyPrefix+userID).Int64()
+	if err == nil && current > 0 {
+		r.redis.Decr(ctx, userAccCountKeyPrefix+userID)
+	}
 }

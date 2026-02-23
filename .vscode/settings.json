@@ -2,6 +2,11 @@
     "chat.tools.terminal.autoApprove": {
         "strings": true,
         "pdftotext": true,
-        "docker-compose": true
+        "docker-compose": true,
+        "pip3": true,
+        "/^wc -l /Users/home/Documents/Development/tests/barclays/eagle/test-api\\.sh && echo \"---\" && bash -n /Users/home/Documents/Development/tests/barclays/eagle/test-api\\.sh && echo \"Syntax OK\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

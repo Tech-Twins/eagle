@@ -65,6 +65,10 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		Address:     req.Address,
 	})
 	if err != nil {
+		if err.Error() == "email already exists" {
+			middleware.RespondWithError(c, http.StatusConflict, "A user with this email address already exists")
+			return
+		}
 		middleware.RespondWithError(c, http.StatusInternalServerError, "Failed to create user")
 		return
 	}

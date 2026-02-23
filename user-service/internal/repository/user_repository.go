@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/eaglebank/shared/models"
+	"github.com/lib/pq"
 )
 
 // UserWriteRepository handles all state-mutating operations for users.
@@ -31,6 +32,9 @@ func (r *UserWriteRepository) Create(user *models.User) error {
 		user.CreatedAt, user.UpdatedAt,
 	)
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return fmt.Errorf("email already exists")
+		}
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 	return nil
