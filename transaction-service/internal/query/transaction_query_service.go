@@ -22,12 +22,16 @@ func NewTransactionQueryService(readRepo *repository.TransactionReadRepository, 
 
 func (s *TransactionQueryService) GetTransaction(q cqrs.GetTransactionQuery) (*models.TransactionView, error) {
 	ctx := context.Background()
+	account, err := s.accountRepo.GetAccount(ctx, q.AccountNumber)
+	if err != nil {
+		return nil, fmt.Errorf("account not found")
+	}
+	if account.UserID != q.UserID {
+		return nil, fmt.Errorf("forbidden")
+	}
 	view, err := s.readRepo.GetByID(ctx, q.TransactionID, q.AccountNumber)
 	if err != nil {
 		return nil, err
-	}
-	if view.UserID != q.UserID {
-		return nil, fmt.Errorf("forbidden")
 	}
 	return view, nil
 }

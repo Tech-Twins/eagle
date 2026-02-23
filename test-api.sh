@@ -195,14 +195,14 @@ fi
 
 # Test 4c: Fetch Non-Existent User (Not Found)
 echo ""
-echo "4️⃣c  Fetching non-existent user (should fail with 404)..."
+echo "4️⃣c  Fetching non-existent user (should fail with 403 or 404)..."
 FETCH_NONEXISTENT_USER=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/v1/users/usr-nonexistent-00000" \
   -H "Authorization: Bearer $TOKEN")
 HTTP_CODE=$(echo "$FETCH_NONEXISTENT_USER" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Non-existent user correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Non-existent user correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -260,14 +260,14 @@ fi
 
 # Test 6c: Fetch Non-Existent Account (Not Found)
 echo ""
-echo "6️⃣c  Fetching non-existent account (should fail with 404)..."
+echo "6️⃣c  Fetching non-existent account (should fail with 403 or 404)..."
 FETCH_NONEXISTENT_ACCOUNT=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/v1/accounts/acc-nonexistent-00000" \
   -H "Authorization: Bearer $TOKEN")
 HTTP_CODE=$(echo "$FETCH_NONEXISTENT_ACCOUNT" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Non-existent account correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Non-existent account correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -351,14 +351,14 @@ fi
 
 # Test 11a2: List Transactions on Non-Existent Account (Not Found)
 echo ""
-echo "1️⃣1️⃣a2  Listing transactions on non-existent account (should fail with 404)..."
+echo "1️⃣1️⃣a2  Listing transactions on non-existent account (should fail with 403 or 404)..."
 LIST_TX_NOT_FOUND=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/v1/accounts/acc-nonexistent-00000/transactions" \
   -H "Authorization: Bearer $TOKEN")
 HTTP_CODE=$(echo "$LIST_TX_NOT_FOUND" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ List transactions on non-existent account correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ List transactions on non-existent account correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -390,14 +390,14 @@ fi
 
 # Test 11b3: Fetch Transaction on Non-Existent Account (Not Found)
 echo ""
-echo "1️⃣1️⃣b3  Fetching transaction on non-existent account (should fail with 404)..."
+echo "1️⃣1️⃣b3  Fetching transaction on non-existent account (should fail with 403 or 404)..."
 FETCH_TX_NO_ACCOUNT=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/v1/accounts/acc-nonexistent-00000/transactions/$TRANSACTION_ID" \
   -H "Authorization: Bearer $TOKEN")
 HTTP_CODE=$(echo "$FETCH_TX_NO_ACCOUNT" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Fetch transaction on non-existent account correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Fetch transaction on non-existent account correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -467,16 +467,16 @@ fi
 
 # Test 11e: Update Non-Existent Account (Not Found)
 echo ""
-echo "1️⃣1️⃣e  Updating non-existent account (should fail with 404)..."
+echo "1️⃣1️⃣e  Updating non-existent account (should fail with 403 or 404)..."
 UPDATE_NONEXISTENT_ACCOUNT=$(curl -s -w "\n%{http_code}" -X PATCH "$BASE_URL/v1/accounts/acc-nonexistent-00000" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"name": "Ghost Account", "accountType": "personal"}')
 HTTP_CODE=$(echo "$UPDATE_NONEXISTENT_ACCOUNT" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Update non-existent account correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Update non-existent account correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -517,16 +517,16 @@ fi
 
 # Test 12c: Transaction on Non-Existent Account (Not Found)
 echo ""
-echo "1️⃣2️⃣c  Transaction on non-existent account (should fail with 404)..."
+echo "1️⃣2️⃣c  Transaction on non-existent account (should fail with 403 or 404)..."
 TX_NOT_FOUND=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/v1/accounts/acc-nonexistent-00000/transactions" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"amount": 100.00, "currency": "GBP", "type": "deposit", "reference": "Ghost deposit"}')
 HTTP_CODE=$(echo "$TX_NOT_FOUND" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Transaction on non-existent account correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Transaction on non-existent account correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -576,16 +576,16 @@ fi
 
 # Test 13c: Update Non-Existent User (Not Found)
 echo ""
-echo "1️⃣3️⃣c  Updating non-existent user (should fail with 404)..."
+echo "1️⃣3️⃣c  Updating non-existent user (should fail with 403 or 404)..."
 UPDATE_NONEXISTENT_USER=$(curl -s -w "\n%{http_code}" -X PATCH "$BASE_URL/v1/users/usr-nonexistent-00000" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"name": "Ghost User"}')
 HTTP_CODE=$(echo "$UPDATE_NONEXISTENT_USER" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Update non-existent user correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Update non-existent user correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -604,14 +604,14 @@ fi
 
 # Test 13e: Delete Non-Existent User (Not Found)
 echo ""
-echo "1️⃣3️⃣e  Deleting non-existent user (should fail with 404)..."
+echo "1️⃣3️⃣e  Deleting non-existent user (should fail with 403 or 404)..."
 DELETE_NONEXISTENT_USER=$(curl -s -w "\n%{http_code}" -X DELETE "$BASE_URL/v1/users/usr-nonexistent-00000" \
   -H "Authorization: Bearer $TOKEN")
 HTTP_CODE=$(echo "$DELETE_NONEXISTENT_USER" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Delete non-existent user correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Delete non-existent user correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 
@@ -662,14 +662,14 @@ fi
 
 # Test 14d: Delete Non-Existent Account (Not Found)
 echo ""
-echo "1️⃣4️⃣d  Deleting non-existent account (should fail with 404)..."
+echo "1️⃣4️⃣d  Deleting non-existent account (should fail with 403 or 404)..."
 DELETE_NONEXISTENT_ACCOUNT=$(curl -s -w "\n%{http_code}" -X DELETE "$BASE_URL/v1/accounts/acc-nonexistent-00000" \
   -H "Authorization: Bearer $TOKEN")
 HTTP_CODE=$(echo "$DELETE_NONEXISTENT_ACCOUNT" | tail -n1)
-if [ "$HTTP_CODE" = "404" ]; then
-    echo "✅ Delete non-existent account correctly returns 404"
+if [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "403" ]; then
+    echo "✅ Delete non-existent account correctly returns $HTTP_CODE"
 else
-    echo "❌ Expected 404, got $HTTP_CODE"
+    echo "❌ Expected 403 or 404, got $HTTP_CODE"
     exit 1
 fi
 

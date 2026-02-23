@@ -118,6 +118,8 @@ func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 	})
 	if err != nil {
 		switch err.Error() {
+		case "account not found":
+			middleware.RespondWithError(c, http.StatusNotFound, "Account not found")
 		case "transaction not found":
 			middleware.RespondWithError(c, http.StatusNotFound, "Transaction not found")
 		case "forbidden":
