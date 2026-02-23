@@ -20,6 +20,8 @@ var (
 )
 
 func main() {
+	middleware.MustInitJWTSecret()
+
 	router := gin.Default()
 	router.Use(middleware.LoggingMiddleware())
 
@@ -33,7 +35,7 @@ func main() {
 	router.POST("/v1/auth/refresh", proxyTo(authServiceURL))
 
 	// User routes
-	router.POST("/v1/users", proxyTo(userServiceURL))                                         // No auth for registration
+	router.POST("/v1/users", proxyTo(userServiceURL)) // No auth for registration
 	router.GET("/v1/users/:userId", middleware.AuthMiddleware(), proxyTo(userServiceURL))
 	router.PATCH("/v1/users/:userId", middleware.AuthMiddleware(), proxyTo(userServiceURL))
 	router.DELETE("/v1/users/:userId", middleware.AuthMiddleware(), proxyTo(userServiceURL))

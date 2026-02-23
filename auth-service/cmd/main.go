@@ -14,6 +14,8 @@ import (
 )
 
 func main() {
+	authqry.MustInitJWTSecret()
+
 	// Database connection
 	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/eagle_users?sslmode=disable")
 	db, err := sql.Open("postgres", dbURL)

@@ -2,8 +2,8 @@ package query
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/eaglebank/auth-service/internal/repository"
@@ -12,19 +12,21 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var (
-	jwtSecretOnce sync.Once
-	jwtSecretVal  []byte
-)
+var jwtSecretVal []byte
+
+// MustInitJWTSecret reads JWT_SECRET from the environment and stores it for
+// use by the auth query service. It must be called once at service startup
+// before any requests are served. The process exits immediately if the
+// variable is unset so the misconfiguration is caught at boot time.
+func MustInitJWTSecret() {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+	jwtSecretVal = []byte(secret)
+}
 
 func jwtSecret() []byte {
-	jwtSecretOnce.Do(func() {
-		secret := os.Getenv("JWT_SECRET")
-		if secret == "" {
-			panic("JWT_SECRET environment variable is not set")
-		}
-		jwtSecretVal = []byte(secret)
-	})
 	return jwtSecretVal
 }
 

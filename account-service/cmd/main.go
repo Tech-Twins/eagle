@@ -20,6 +20,8 @@ import (
 )
 
 func main() {
+	middleware.MustInitJWTSecret()
+
 	// Database connection (write store)
 	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/eagle_accounts?sslmode=disable")
 	db, err := sql.Open("postgres", dbURL)
